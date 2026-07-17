@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>팀 발표 순서 룰렛</title>
+  <style>
+    :root {
+      --bg-1: #080b1f;
+      --bg-2: #12183d;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --gold: #facc15;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --card: rgba(255, 255, 255, 0.09);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --danger: #fb7185;
+      --success: #34d399;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(124, 58, 237, 0.45), transparent 30%),
+        radial-gradient(circle at 85% 20%, rgba(6, 182, 212, 0.35), transparent 28%),
+        radial-gradient(circle at 50% 90%, rgba(250, 204, 21, 0.18), transparent 30%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+      pointer-events: none;
+    }
+
+    .app {
+      width: min(1240px, 94vw);
+      margin: 0 auto;
+      padding: 34px 0 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 30px rgba(124,58,237,0.35);
+      font-size: 14px;
+      color: #c4b5fd;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-size: clamp(34px, 5vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -0.06em;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, #fff, #a5f3fc, #fef08a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(300px, 340px) minmax(0, 1fr) minmax(280px, 300px);
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .panel {
+      border: 1px solid var(--card-border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.055));
+      border-radius: 26px;
+      box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255,255,255,0.18);
+      backdrop-filter: blur(18px);
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 250px;
+      resize: vertical;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
+      outline: none;
+      padding: 16px;
+      color: var(--text);
+      background: rgba(2, 6, 23, 0.54);
+      box-shadow: inset 0 2px 18px rgba(0,0,0,0.25);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    textarea::placeholder {
+      color: rgba(226,232,240,0.45);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 10px 0 0;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      border-radius: 16px;
+      padding: 13px 16px;
+      transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.24);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      flex: 1;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .danger {
+      background: linear-gradient(135deg, #f43f5e, #fb7185);
+    }
+
+    .wheel-panel {
+      min-height: 650px;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .stage-glow {
+      position: absolute;
+      width: min(560px, 100%);
+      height: min(560px, 100%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(6,182,212,0.20), transparent 68%);
+      filter: blur(8px);
+      animation: pulseGlow 2.4s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(0.96); opacity: 0.75; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: min(560px, 100%);
+      max-width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    canvas#wheelCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      filter: drop-shadow(0 34px 44px rgba(0,0,0,0.4));
+    }
+
+    canvas#confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 24px solid transparent;
+      border-right: 24px solid transparent;
+      border-top: 58px solid var(--gold);
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,0.45));
+      z-index: 4;
+    }
+
+    .pointer::after {
+      content: "";
+      position: absolute;
+      left: -13px;
+      top: -55px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff7ed;
+      box-shadow: 0 0 0 7px rgba(250,204,21,0.25);
+    }
+
+    .center-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 142px;
+      height: 142px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      background:
+        radial-gradient(circle at 35% 25%, #fff, #fef3c7 20%, #f59e0b 54%, #b45309 100%);
+      color: #111827;
+      font-size: 20px;
+      line-height: 1.08;
+      box-shadow:
+        inset 0 4px 12px rgba(255,255,255,0.6),
+        0 18px 36px rgba(0,0,0,0.34);
+      z-index: 3;
+      user-select: none;
+    }
+
+    .center-button small {
+      display: block;
+      font-size: 12px;
+      color: rgba(17,24,39,0.72);
+      margin-top: 5px;
+    }
+
+    .status {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      min-height: 68px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 14px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(2, 6, 23, 0.52);
+      color: #e0f2fe;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .status strong {
+      color: #fef08a;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(2,6,23,0.42);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .stat b {
+      display: block;
+      font-size: 24px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .result-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 500px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .result-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,0.42);
+      border: 1px solid rgba(255,255,255,0.12);
+      animation: resultIn 0.45s cubic-bezier(.2,1,.2,1);
+    }
+
+    @keyframes resultIn {
+      from { opacity: 0; transform: translateY(14px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .rank {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #facc15, #f97316);
+      color: #111827;
+      font-weight: 1000;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.45);
+    }
+
+    .team-name {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .time {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .empty {
+      color: var(--muted);
+      line-height: 1.55;
+      padding: 18px;
+      border: 1px dashed rgba(255,255,255,0.2);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.045);
+    }
+
+    .winner-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(2,6,23,0.62);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      padding: 20px;
+    }
+
+    .winner-modal.show {
+      display: grid;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .winner-card {
+      width: min(560px, 94vw);
+      text-align: center;
+      border-radius: 34px;
+      padding: 36px 28px;
+      border: 1px solid rgba(255,255,255,0.22);
+      background:
+        radial-gradient(circle at 30% 15%, rgba(250,204,21,0.30), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+      box-shadow: 0 30px 90px rgba(0,0,0,0.55);
+      transform-origin: center;
+      animation: pop 0.45s cubic-bezier(.2, 1.4, .2, 1);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.82); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .winner-card .medal {
+      font-size: 56px;
+      margin-bottom: 8px;
+    }
+
+    .winner-card h3 {
+      margin: 0;
+      color: #fde68a;
+      font-size: 20px;
+    }
+
+    .winner-card p {
+      margin: 12px 0 24px;
+      font-size: clamp(32px, 7vw, 62px);
+      line-height: 1.05;
+      letter-spacing: -0.07em;
+      font-weight: 1000;
+    }
+
+    .mini {
+      font-size: 12px;
+      color: rgba(226,232,240,0.7);
+      margin-top: 12px;
+    }
+
+    @media (max-width: 1240px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .wheel-panel {
+        min-height: 610px;
+      }
+
+      .status {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        margin-top: 16px;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .app {
+        width: min(94vw, 430px);
+        padding-top: 34px;
+      }
+
+      .panel {
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .wheel-panel {
+        min-height: 600px;
+      }
+
+      .canvas-wrap {
+        width: min(100%, 370px);
+      }
+
+      .center-button {
+        width: 118px;
+        height: 118px;
+        font-size: 18px;
+      }
+
+      .status {
+        margin-top: 14px;
+        padding: 13px 14px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="app">
+    <header>
+      <div class="badge">🎤 Team Presentation Roulette</div>
+      <h1><span>팀 발표 순서 룰렛</span></h1>
+      <p class="subtitle">팀명을 입력하고 돌리면, 뽑힌 팀은 자동 제외되고 발표 순서에 기록됩니다.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <h2>팀명 입력</h2>
+        <textarea id="teamInput" spellcheck="false" placeholder="한 줄에 한 팀씩 입력하세요.
+예)
+스택&스택
+코딩은 못말려
+AI 어벤져스
+커리어핏 드림팀"></textarea>
+
+        <p class="hint">쉼표로 구분해도 됩니다. 같은 이름은 자동으로 한 번만 등록됩니다.</p>
+
+        <div class="button-row">
+          <button class="primary" id="applyBtn">팀 적용</button>
+          <button class="secondary" id="sampleBtn">샘플</button>
+        </div>
+
+        <div class="button-row">
+          <button class="danger" id="resetBtn">전체 초기화</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <b id="remainCount">0</b>
+            <span>남은 팀</span>
+          </div>
+          <div class="stat">
+            <b id="pickedCount">0</b>
+            <span>추첨 완료</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel wheel-panel">
+        <div class="stage-glow"></div>
+
+        <div class="canvas-wrap">
+          <div class="pointer"></div>
+          <canvas id="wheelCanvas" width="720" height="720" aria-label="팀 발표 순서 추첨 룰렛"></canvas>
+          <div class="center-button" id="spinBtn" role="button" tabindex="0">
+            SPIN
+            <small>눌러서 추첨</small>
+          </div>
+        </div>
+
+        <div class="status" id="status">
+          팀명을 입력한 뒤 <strong>팀 적용</strong>을 누르고 룰렛을 돌려주세요.
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>발표 순서 기록</h2>
+        <div class="result-list" id="resultList">
+          <div class="empty">아직 추첨된 팀이 없습니다.<br>첫 번째 발표 팀을 뽑아볼까요?</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="winner-modal" id="winnerModal">
+    <div class="winner-card">
+      <div class="medal">🏆</div>
+      <h3 id="winnerRank">1번째 발표 팀</h3>
+      <p id="winnerName">팀명</p>
+      <button class="primary" id="closeModalBtn">확인하고 계속</button>
+      <div class="mini">효과음은 브라우저 정책상 버튼 클릭 후 재생됩니다.</div>
+    </div>
+  </div>
+
+  <script>
+    const wheelCanvas = document.getElementById("wheelCanvas");
+    const ctx = wheelCanvas.getContext("2d");
+    const confettiCanvas = document.getElementById("confettiCanvas");
+    const cctx = confettiCanvas.getContext("2d");
+
+    const teamInput = document.getElementById("teamInput");
+    const applyBtn = document.getElementById("applyBtn");
+    const sampleBtn = document.getElementById("sampleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const spinBtn = document.getElementById("spinBtn");
+    const statusEl = document.getElementById("status");
+    const resultList = document.getElementById("resultList");
+    const remainCount = document.getElementById("remainCount");
+    const pickedCount = document.getElementById("pickedCount");
+    const winnerModal = document.getElementById("winnerModal");
+    const winnerRank = document.getElementById("winnerRank");
+    const winnerName = document.getElementById("winnerName");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    const colors = [
+      ["#7c3aed", "#22d3ee"],
+      ["#f97316", "#facc15"],
+      ["#ec4899", "#a855f7"],
+      ["#06b6d4", "#34d399"],
+      ["#ef4444", "#fb7185"],
+      ["#3b82f6", "#818cf8"],
+      ["#14b8a6", "#bef264"],
+      ["#f59e0b", "#f43f5e"]
+    ];
+
+    const state = {
+      allTeams: [],
+      remainingTeams: [],
+      pickedTeams: [],
+      rotation: -Math.PI / 2,
+      isSpinning: false,
+      audioCtx: null,
+      lastTickIndex: null,
+      confetti: []
+    };
+
+    function resizeConfettiCanvas() {
+      confettiCanvas.width = window.innerWidth * devicePixelRatio;
+      confettiCanvas.height = window.innerHeight * devicePixelRatio;
+      cctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+
+    window.addEventListener("resize", resizeConfettiCanvas);
+    resizeConfettiCanvas();
+
+    function normalizeTeams(raw) {
+      return [...new Set(
+        raw
+          .split(/\n|,/)
+          .map(name => name.trim())
+          .filter(Boolean)
+      )];
+    }
+
+    function updateCounts() {
+      remainCount.textContent = state.remainingTeams.length;
+      pickedCount.textContent = state.pickedTeams.length;
+    }
+
+    function setStatus(html) {
+      statusEl.innerHTML = html;
+    }
+
+    function drawWheel() {
+      const size = wheelCanvas.width;
+      const cx = size / 2;
+      const cy = size / 2;
+      const radius = size * 0.43;
+      const innerRadius = size * 0.13;
+      const teams = state.remainingTeams;
+      const count = Math.max(teams.length, 1);
+      const slice = (Math.PI * 2) / count;
+
+      ctx.clearRect(0, 0, size, size);
+
+      const bg = ctx.createRadialGradient(cx, cy, 40, cx, cy, radius + 40);
+      bg.addColorStop(0, "rgba(255,255,255,0.15)");
+      bg.addColorStop(0.55, "rgba(124,58,237,0.16)");
+      bg.addColorStop(1, "rgba(2,6,23,0.2)");
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (teams.length === 0) {
+        ctx.save();
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.18)";
+        ctx.lineWidth = 8;
+        ctx.stroke();
+
+        ctx.fillStyle = "#e2e8f0";
+        ctx.textAlign = "center";
+        ctx.font = "800 34px system-ui";
+        ctx.fillText("팀을 입력해 주세요", cx, cy - 8);
+        ctx.font = "500 18px system-ui";
+        ctx.fillStyle = "rgba(226,232,240,0.72)";
+        ctx.fillText("팀 적용 후 룰렛이 활성화됩니다", cx, cy + 30);
+        ctx.restore();
+        return;
+      }
+
+      for (let i = 0; i < count; i++) {
+        const start = state.rotation + i * slice;
+        const end = start + slice;
+        const pair = colors[i % colors.length];
+
+        const grad = ctx.createLinearGradient(
+          cx + Math.cos(start) * radius,
+          cy + Math.sin(start) * radius,
+          cx + Math.cos(end) * radius,
+          cy + Math.sin(end) * radius
+        );
+        grad.addColorStop(0, pair[0]);
+        grad.addColorStop(1, pair[1]);
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.34)";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + slice / 2);
+
+        ctx.fillStyle = "rgba(255,255,255,0.14)";
+        ctx.beginPath();
+        ctx.roundRect(radius * 0.42, -24, radius * 0.45, 48, 18);
+        ctx.fill();
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "rgba(0,0,0,0.4)";
+        ctx.shadowBlur = 6;
+
+        const fontSize = count <= 5 ? 28 : count <= 9 ? 23 : 18;
+        ctx.font = `900 ${fontSize}px system-ui, sans-serif`;
+
+        const label = teams[i];
+        const displayLabel = label.length > 11 ? label.slice(0, 10) + "…" : label;
+        ctx.fillText(displayLabel, radius * 0.64, 0);
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.92)";
+      ctx.lineWidth = 9;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 18, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(250,204,21,0.78)";
+      ctx.lineWidth = 7;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(15,23,42,0.76)";
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255,255,255,0.42)";
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      ctx.fillStyle = "#fef08a";
+      ctx.font = "900 36px system-ui";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("GO", cx, cy);
+      ctx.restore();
+    }
+
+    function getAudioCtx() {
+      if (!state.audioCtx) {
+        state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return state.audioCtx;
+    }
+
+    function playTone(freq = 540, duration = 0.055, type = "sine", volume = 0.04) {
+      const audioCtx = getAudioCtx();
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.value = freq;
+      gain.gain.value = volume;
+
+      oscillator.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+    }
+
+    function playTick() {
+      playTone(420 + Math.random() * 140, 0.035, "square", 0.022);
+    }
+
+    function playWinSound() {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((note, index) => {
+        setTimeout(() => playTone(note, 0.18, "triangle", 0.06), index * 105);
+      });
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function spin() {
+      if (state.isSpinning || state.remainingTeams.length === 0) return;
+
+      getAudioCtx().resume();
+
+      const teams = state.remainingTeams;
+      const count = teams.length;
+      const slice = (Math.PI * 2) / count;
+      const selectedIndex = Math.floor(Math.random() * count);
+      const pointerAngle = -Math.PI / 2;
+
+      const selectedCenterAtZeroRotation = selectedIndex * slice + slice / 2;
+      const fullTurns = 6 + Math.floor(Math.random() * 3);
+      const jitter = (Math.random() - 0.5) * slice * 0.5;
+      const targetRotation = pointerAngle - selectedCenterAtZeroRotation + fullTurns * Math.PI * 2 + jitter;
+
+      const startRotation = state.rotation;
+      const delta = targetRotation - startRotation;
+      const duration = 4700 + Math.random() * 900;
+      const startTime = performance.now();
+
+      state.isSpinning = true;
+      state.lastTickIndex = null;
+      spinBtn.style.pointerEvents = "none";
+      setStatus("룰렛이 돌아가는 중입니다… <strong>운명의 발표 순서</strong>를 정하는 중!");
+
+      function frame(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOutCubic(progress);
+
+        state.rotation = startRotation + delta * eased;
+
+        const currentPointerIndex = Math.floor(
+          (((pointerAngle - state.rotation) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2)) / slice
+        );
+
+        if (currentPointerIndex !== state.lastTickIndex && progress < 0.96) {
+          state.lastTickIndex = currentPointerIndex;
+          playTick();
+        }
+
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          state.isSpinning = false;
+          spinBtn.style.pointerEvents = "auto";
+          const finalIndex = getSelectedIndex();
+          pickTeam(finalIndex);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function getSelectedIndex() {
+      const count = state.remainingTeams.length;
+      const slice = (Math.PI * 2) / count;
+      const pointerAngle = -Math.PI / 2;
+      const normalized = ((pointerAngle - state.rotation) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      return Math.floor(normalized / slice);
+    }
+
+    function pickTeam(index) {
+      const team = state.remainingTeams[index];
+      const rank = state.pickedTeams.length + 1;
+      const pickedAt = new Date();
+
+      state.pickedTeams.push({
+        rank,
+        name: team,
+        time: pickedAt.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })
+      });
+
+      state.remainingTeams.splice(index, 1);
+
+      updateCounts();
+      renderResults();
+      drawWheel();
+
+      winnerRank.textContent = `${rank}번째 발표 팀`;
+      winnerName.textContent = team;
+      winnerModal.classList.add("show");
+
+      playWinSound();
+      launchConfetti();
+
+      if (state.remainingTeams.length === 0) {
+        setStatus("모든 팀의 발표 순서가 정해졌습니다. <strong>오늘 발표판 완성!</strong>");
+      } else {
+        setStatus(`<strong>${team}</strong> 팀이 ${rank}번째 발표 팀으로 선정되었습니다. 남은 팀: ${state.remainingTeams.length}팀`);
+      }
+    }
+
+    function renderResults() {
+      resultList.innerHTML = "";
+
+      if (state.pickedTeams.length === 0) {
+        resultList.innerHTML = `<div class="empty">아직 추첨된 팀이 없습니다.<br>첫 번째 발표 팀을 뽑아볼까요?</div>`;
+        return;
+      }
+
+      state.pickedTeams.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "result-item";
+        div.innerHTML = `
+          <div class="rank">${item.rank}</div>
+          <div>
+            <div class="team-name">${escapeHtml(item.name)}</div>
+            <div class="time">${item.time} 추첨 완료</div>
+          </div>
+        `;
+        resultList.appendChild(div);
+      });
+    }
+
+    function escapeHtml(value) {
+      return value.replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function applyTeams() {
+      const teams = normalizeTeams(teamInput.value);
+
+      if (teams.length < 2) {
+        setStatus("룰렛은 최소 <strong>2개 팀</strong> 이상 입력해야 재미있게 돌아갑니다.");
+        return;
+      }
+
+      state.allTeams = teams;
+      state.remainingTeams = [...teams];
+      state.pickedTeams = [];
+      state.rotation = -Math.PI / 2;
+
+      updateCounts();
+      renderResults();
+      drawWheel();
+
+      setStatus(`<strong>${teams.length}개 팀</strong>이 등록되었습니다. 이제 가운데 SPIN 버튼을 눌러주세요.`);
+    }
+
+    function resetAll() {
+      state.allTeams = [];
+      state.remainingTeams = [];
+      state.pickedTeams = [];
+      state.rotation = -Math.PI / 2;
+      state.isSpinning = false;
+      teamInput.value = "";
+
+      updateCounts();
+      renderResults();
+      drawWheel();
+
+      setStatus("초기화되었습니다. 팀명을 다시 입력해 주세요.");
+    }
+
+    function launchConfetti() {
+      const amount = 170;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      state.confetti = Array.from({ length: amount }, () => ({
+        x: w / 2 + (Math.random() - 0.5) * 180,
+        y: h * 0.18 + Math.random() * 40,
+        vx: (Math.random() - 0.5) * 9,
+        vy: Math.random() * -8 - 3,
+        size: Math.random() * 8 + 5,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.25,
+        life: Math.random() * 70 + 90,
+        color: ["#facc15", "#22d3ee", "#a78bfa", "#fb7185", "#34d399", "#ffffff"][Math.floor(Math.random() * 6)]
+      }));
+
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      cctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      state.confetti.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.22;
+        p.rot += p.vr;
+        p.life -= 1;
+
+        cctx.save();
+        cctx.translate(p.x, p.y);
+        cctx.rotate(p.rot);
+        cctx.fillStyle = p.color;
+        cctx.globalAlpha = Math.max(p.life / 100, 0);
+        cctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        cctx.restore();
+      });
+
+      state.confetti = state.confetti.filter(p => p.life > 0 && p.y < window.innerHeight + 60);
+
+      if (state.confetti.length > 0) {
+        requestAnimationFrame(animateConfetti);
+      } else {
+        cctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
+    applyBtn.addEventListener("click", applyTeams);
+
+    sampleBtn.addEventListener("click", () => {
+      teamInput.value = [
+        "스택&스택",
+        "코딩은 못말려",
+        "AI 어벤져스",
+        "커리어핏 드림팀",
+        "버그헌터스",
+        "프롬프트 장인들"
+      ].join("\n");
+      applyTeams();
+    });
+
+    resetBtn.addEventListener("click", resetAll);
+
+    spinBtn.addEventListener("click", spin);
+    spinBtn.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        spin();
+      }
+    });
+
+    closeModalBtn.addEventListener("click", () => {
+      winnerModal.classList.remove("show");
+    });
+
+    winnerModal.addEventListener("click", event => {
+      if (event.target === winnerModal) {
+        winnerModal.classList.remove("show");
+      }
+    });
+
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.arcTo(x + w, y, x + w, y + h, radius);
+        this.arcTo(x + w, y + h, x, y + h, radius);
+        this.arcTo(x, y + h, x, y, radius);
+        this.arcTo(x, y, x + w, y, radius);
+        this.closePath();
+        return this;
+      };
+    }
+
+    updateCounts();
+    renderResults();
+    drawWheel();
+  </script>
+</body>
+</html>
